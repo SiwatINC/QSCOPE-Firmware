@@ -10,6 +10,8 @@ long freq1=0;
 long freq2=0;
 StaticJsonDocument<200> datarep;
 I2C_eeprom datastore(0x50,0x2000);
+void freq1count();
+void freq2count();
 void setup() {
   datastore.begin();
   datastore.setBlock(0,0,128);
@@ -26,18 +28,20 @@ void setup() {
 }
 
 void loop() {
+  datarep["timestamp"]=millis();
   datarep["CH1"]=analogRead(PF0);
   datarep["CH2"]=analogRead(PF1);
-  datarep["timestamp"]=millis();
-  datarep["freq1"]=freq1;
-  datarep["freq2"]=freq2;
+  datarep["freq1cnt"]=freq1;
+  datarep["freq2cnt"]=freq2;
   serializeJson(datarep,SerialUSB);
 }
 void freq1count(){
   detachInterrupt(digitalPinToInterrupt(PB7));
   freq1++;
+  attachInterrupt(digitalPinToInterrupt(PB7),freq1count,RISING);
 }
 void freq2count(){
   detachInterrupt(digitalPinToInterrupt(PB6));
   freq2++;
+  attachInterrupt(digitalPinToInterrupt(PB6),freq2count,RISING);
 }
