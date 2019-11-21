@@ -6,6 +6,11 @@
 #include <USBCore.h>
 #define USB_VID 0x03eb
 #define USB_PID 0x2ff4
+#define BAUD 115200
+//#define MINIMAL_FAST
+#ifdef MINIMAL_FAST
+#include "fastpollroutine.asm"
+#endif
 long freq1=0;
 long freq2=0;
 StaticJsonDocument<200> datarep;
@@ -18,10 +23,8 @@ void setup() {
   datastore.determineSize();
   Serial.begin(115200);
   SerialUSB.begin(115200);
-  pinMode(PF0,INPUT);
-  pinMode(PF1,INPUT);
-  pinMode(PB7,INPUT);
-  pinMode(PB6,INPUT);
+  DDRF = B00111111;
+  DDRB = B11111100;
   Serial.println("Siwat INC QSCOPE R1 Ready | Standalone Mode");
   attachInterrupt(digitalPinToInterrupt(PB7),freq1count,RISING);
   attachInterrupt(digitalPinToInterrupt(PB6),freq2count,RISING);
@@ -36,12 +39,14 @@ void loop() {
   serializeJson(datarep,SerialUSB);
 }
 void freq1count(){
-  detachInterrupt(digitalPinToInterrupt(PB7));
   freq1++;
-  attachInterrupt(digitalPinToInterrupt(PB7),freq1count,RISING);
 }
 void freq2count(){
-  detachInterrupt(digitalPinToInterrupt(PB6));
   freq2++;
-  attachInterrupt(digitalPinToInterrupt(PB6),freq2count,RISING);
+}
+ISR(INT6_vect){ //PB6 fc2
+  freq2++;
+}
+ISR(INT7_vect){ //PB7 fc1
+  freq1++;
 }
